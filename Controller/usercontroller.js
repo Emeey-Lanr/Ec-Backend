@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer')
 const bcrypt = require('bcryptjs')
 const userModel = require('../model/usermodel')
 const jwt = require('jsonwebtoken')
+const { use } = require('express/lib/router')
 let userUserName = ''
 let userEmail = ''
 let OTP = {}
@@ -10,12 +11,13 @@ const registerUser = (req, res) => {
 
     OTP = req.body.otpSchema
     let form = new userModel(req.body.userSchema)
-    userModel.findOne({ Email: userEmail }, (err, result) => {
+    userModel.findOne({ Email: req.body.userSchema.Email }, (err, result) => {
         if (err) {
             res.send({ status: false, message: 'An error ocuured' })
         } else {
             if (result) {
-                res.send({ status: false, message: 'Duplicate Email' })
+                console.log(result)
+                res.send({ status: false, message: 'Duplicate Email', duplicateEmail: true })
                 console.log('duplicate Email')
             } else {
                 userModel.findOne({ userName: req.body.userSchema.userName }, (err, result) => {
@@ -23,14 +25,15 @@ const registerUser = (req, res) => {
                         res.send({ status: false, message: 'An error ocuured' })
                     } else {
                         if (result) {
-                            res.send({ status: false, message: 'Username Already Picked' })
+                            res.send({ status: false, message: 'Username Already Picked', })
                         } else {
                             form.save((err, result) => {
 
                                 if (err) {
                                     res.send({ message: "An error happened while saving", status: false })
                                 } else {
-                                    res.send({ message: 'Saved Succesfully', status: true })
+                                    let token = jwt.sign({ pass: result.Email }, process.env.SECRET, { expiresIn: '1h' })
+                                    res.send({ message: 'Saved Succesfully', status: true, token: token })
                                     userEmail = result.Email
                                     userUserName = result.userName
 
@@ -143,11 +146,49 @@ const otpVerication = (req, res) => {
 
 }
 
+//Token verification 
+const jwtTokenVerification = (req, res) => {
+    let token = req.headers.authorization.split(" ")[1]
+    // console.log(m)
+    jwt.verify(token, process.env.SECRET, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            userEmail = result.pass
+            res.send({ message: 'Token Verified Succesfully', status: true })
+        }
+    })
+
+}
+
+//A controller for getting the user info
+const userInfo = (req, res) => {
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log(err)
+            res.send({ message: "an error ocuured", status: false })
+        } else {
+            res.send({ status: true, result: result })
+
+        }
+    })
+}
+
+///All user
+let ecIdentifier = "EC_Certified_User"
+const allUser = (req, res) => {
+    userModel.find({ ecIdentifier: ecIdentifier }, (err, result) => {
+        if (err) {
+            console.log(err)
+            res.send({ status: false, message: 'no user found' })
+        } else {
+            let user = result.filter((users, id) => users.Email !== userEmail)
+            res.send({ status: true, result: user })
+
+        }
+    })
+}
 
 
 
-
-
-
-
-module.exports = { registerUser, authenticate, message, otpVerication }
+module.exports = { registerUser, authenticate, message, otpVerication, jwtTokenVerification, userInfo, allUser }
