@@ -1,13 +1,12 @@
 const mongoose = require('mongoose')
-const chatSchema = mongoose.Scehma({
-    senderId: { type: String },
-    recieverId: { type: String },
-    mesage: { type: Array }
+const ChatSchema = mongoose.Schema({
+    ecChatIdentification: { type: String },
+    messagesBox: { type: Array }
+
 })
 
-const chatModel = mongoose.model('chat-collection', chatSchema)
+const ChatModel = mongoose.model('chat-collection', ChatSchema)
 
 
 
-
-module.exports = chatModel
+module.exports = ChatModel

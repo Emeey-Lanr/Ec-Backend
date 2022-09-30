@@ -22,6 +22,9 @@ app.use(express.json({ limit: "100mb" }))
 const route = require('./Routes/user')
 app.use('/user', route)
 
+const ChatModel = require("./model/chatmodel")
+
+
 
 let status = false
 let userIdentification = [
@@ -38,6 +41,10 @@ let biChatBox = []
 let id1 = 0
 let id2 = 0
 let chatListBox = []
+
+// app.post("/chat/saveChatDetails", (req, res) => {
+
+
 io.on('connection', (socket) => {
 
     console.log(`a user has connected ${socket.id} `)
@@ -46,6 +53,35 @@ io.on('connection', (socket) => {
     // the server recieve the user username nad id back and gets it stored in an array
     socket.on('userDetails', (info) => {
         console.log(info)
+        const saveInfo = () => {
+
+            let m = "Ec-Chat-collection"
+            let chat = {
+                ecChatIdentification: "Ec-Chat-collection",
+                messagesBox: []
+            }
+            let chatForm = new ChatModel(chat)
+            ChatModel.findOne({ ecChatIdentification: m }, (err, result) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    if (result) {
+                        chatBox = result.messagesBox
+                        console.log(result, 'able to find')
+                    } else {
+                        chatForm.save((err, result) => {
+                            if (err) {
+                                console.log('unable, to save')
+                            } else {
+                                result
+                                console.log(result, 'able to save')
+                            }
+                        })
+                    }
+                }
+            })
+        }
+        saveInfo()
         if (userIdentification.find((users, id) => users.username === info.username)) {
             console.log('user already exist')
         } else {
@@ -82,13 +118,13 @@ io.on('connection', (socket) => {
     socket.on('chatWith', (messageChat) => {
 
         reciever = messageChat.recieverInfo
-        //bi communication  commes the two concatinated name, the reverse and the non revese
-        ///If filters it to find the two box and pushes the message, time inside
+        //bi communication  comes with the two concatinated name, the reverse and the non revese
+        ///It filters it to find the two box and pushes the message, time inside
         biChatBox = chatBox.filter((chatb, id) => chatb.uniqueId === messageChat.pairId || chatb.uniqueId === messageChat.reversepairId)
         biChatBox[0].messages.push({ recieverName: reciever, message: messageChat.message, time: messageChat.time })
         biChatBox[1].messages.push({ recieverName: reciever, message: messageChat.message, time: messageChat.time })
         console.log(biChatBox[0], biChatBox[1])
-        ///It looks for the ids of the chatboxes 
+        ///It looks for the ids of the chatbox of the user and the person he or she is chatting with
         chatBox.map((user, id) => {
             if (user.uniqueId === messageChat.pairId) {
                 id1 = id
@@ -102,17 +138,28 @@ io.on('connection', (socket) => {
             }
         })
         console.log(id1, id2)
-        //it then updates it with with the original ones
+        //it then updates the chatboxes with with the original ones
         chatBox[id1] = biChatBox[0]
         chatBox[id2] = biChatBox[1]
+        const updateChat = () => {
+            ChatModel.findOneAndUpdate({ ecChatIdentification: 'Ec-Chat-collection' }, { ecChatIdentification: 'Ec-Chat-collection', messagesBox: chatBox }, (err, result) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log('able to update')
+                }
+            })
+        }
+        updateChat()
+
 
         ///We search if the user is online or not, if online, it recieves the message instantly at the particular id
         receivingUser = userIdentification.filter((usersOnline, id) => usersOnline.username === messageChat.recieverInfo)
         sendingUser = userIdentification.filter((usersOnline, id) => usersOnline.username === messageChat.senderInfo)
         if (receivingUser.length > 0) {
-            // socket.to(receivingUser[0].userid).emit('messageSent', chatBox[id1])
-            // socket.to(sendingUser[0].userid).emit('messageSent', chatBox[id2])
-            socket.to(receivingUser[0].userid).to(sendingUser[0].userid).emit('messageSent', chatBox[id1])
+            socket.to(receivingUser[0].userid).emit('messageSent', chatBox[id1])
+            socket.emit('messageSentRecieved', chatBox[id2])
+            // socket.to(receivingUser[0].userid).to(sendingUser[0].userid).emit('messageSent', chatBox[id1])
 
         } else {
             socket.emit('messageSent', chatBox[id1])
@@ -129,14 +176,20 @@ io.on('connection', (socket) => {
     })
 
 
-    socket.on('disconnection', () => {
+    socket.on('disconnect', () => {
         //It removes the user that get disconnected from the chat from the useridentification array
         console.log(`a user has disconnected ${socket.id}`)
+        let userDisconnected = userIdentification.filter((user, id) => user.userid === socket.id)
+        console.log(userDisconnected)
         let user = userIdentification.filter((user, id) => user.userid !== socket.id)
         userIdentification = user
 
+
     })
 })
+
+
+
 
 
 
