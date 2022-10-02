@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs')
 const userModel = require('../model/usermodel')
 const jwt = require('jsonwebtoken')
 const { use } = require('express/lib/router')
+const { status } = require('express/lib/response')
+const cloudinary = require("cloudinary")
+
 let userUserName = ''
 let userEmail = ''
 let OTP = {}
@@ -189,6 +192,149 @@ const allUser = (req, res) => {
     })
 }
 
+//Friend Request 
+let lovedFriend = {}
+let friendUwantToBeHisFriend = {}
+const friendRequest = (req, res) => {
+    userModel.findOne({ _id: req.body.moreinfo.userId }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            lovedFriend = result
+            friendUwantToBeHisFriend = {
+                Email: result.Email,
+                userName: result.userName,
+                imgURL: result.imgURL,
+                aboutMe: result.aboutMe,
+                status: false,
+            }
+
+            console.log()
+            userModel.findOne({ Email: userEmail }, (err, result) => {
+                let user = result
+                user.friendList.push(friendUwantToBeHisFriend)
+                userModel.findOneAndUpdate({ Email: userEmail }, user, (err, result) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        lovedFriend.notificationNumber[0] = lovedFriend.notificationNumber[0] + 1
+                        lovedFriend.notification.push(req.body.notificationSent)
+                        userModel.findOneAndUpdate({ _id: req.body.moreinfo.userId }, lovedFriend, (err, result) => {
+                            if (err) {
+                                console.log(err)
+                            } else {
+                                console.log(result, 'able to upadate')
+                            }
+                        })
+                    }
+                })
+            })
+        }
+
+    })
+}
+//Notification  
+
+const Notification = (req, res) => {
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+
+            let notificationNumber = result.notificationNumber[0]
+            let notification = result.notification
+            console.log(notification)
+            res.send({ info: notification, notificationpoints: notificationNumber })
+        }
+    })
+}
 
 
-module.exports = { registerUser, authenticate, message, otpVerication, jwtTokenVerification, userInfo, allUser }
+//Accepting Friend Request 
+let thefriendRequesting;
+let user = {}
+let userFriendId = 0;
+const AceptFriendRequest = (req, res) => {
+    console.log(req.body)
+    ///We looked for the user tha sent a friend request
+    userModel.findOne({ userName: req.body.theAcceptedFriend.name }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            thefriendRequesting = result
+            //the user info is to be push into the person he has sent a friend request to friendlisty
+            friendUwantToBeHisFriend = {
+                Email: result.Email,
+                userName: result.userName,
+                imgURL: result.imgURL,
+                aboutMe: result.aboutMe,
+                status: true,
+            }
+            ///Looking for the id for the person he has sent a friend request to to
+            //change the status to true, meaning it has been accepted
+            thefriendRequesting.friendList.map((user, id) => {
+                if (user.userName === req.body.theAcceptedFriend.userRequestingTo) {
+                    userFriendId = id
+                }
+            })
+            thefriendRequesting.friendList[userFriendId].status = true
+
+            ///It shows the he has a notification
+            thefriendRequesting.notificationNumber[0] = thefriendRequesting.notificationNumber[0] + 1
+            ///A notification is pushed that the friend request has been accepted
+            thefriendRequesting.notification.push(req.body.notificationSent)
+
+            userModel.findOneAndUpdate({ userName: req.body.theAcceptedFriend.name }, thefriendRequesting, (err) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log('Able to save the person that has requested info')
+                }
+            })
+
+            userModel.findOne({ Email: userEmail }, (err, result) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    user = result
+                    user.friendList.push(friendUwantToBeHisFriend)
+                    userModel.findOneAndUpdate({ Email: userEmail }, user, (err) => {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log('Friend added succesfully')
+                        }
+
+                    })
+                }
+            })
+        }
+    })
+}
+
+
+////Friend get 
+let myFriend = []
+const getMyFriend = (req, res) => {
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            myFriend = result.friendList.filter((friend, id) => friend.status === true)
+            res.send({ myFriend: myFriend, status: true })
+        }
+    })
+}
+module.exports = {
+    registerUser,
+    authenticate,
+    message,
+    otpVerication,
+    jwtTokenVerification,
+    userInfo,
+    allUser,
+    friendRequest,
+    Notification,
+    AceptFriendRequest,
+    getMyFriend
+}

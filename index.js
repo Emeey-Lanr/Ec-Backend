@@ -41,7 +41,8 @@ let biChatBox = []
 let id1 = 0
 let id2 = 0
 let chatListBox = []
-
+let user1 = ""
+let user2 = ""
 // app.post("/chat/saveChatDetails", (req, res) => {
 
 
@@ -109,6 +110,8 @@ io.on('connection', (socket) => {
             ///else it pushes the new name into the chatbox
             chatBox.push(userSchema.one)
             chatBox.push(userSchema.two)
+            // user1 = userSchema.one.user
+            // user2 = userSchema.two.user
             socket.emit('messageSent', userSchema.one)
             console.log(chatBox)
         }
@@ -121,10 +124,21 @@ io.on('connection', (socket) => {
         //bi communication  comes with the two concatinated name, the reverse and the non revese
         ///It filters it to find the two box and pushes the message, time inside
         biChatBox = chatBox.filter((chatb, id) => chatb.uniqueId === messageChat.pairId || chatb.uniqueId === messageChat.reversepairId)
+
         biChatBox[0].messages.push({ recieverName: reciever, message: messageChat.message, time: messageChat.time })
         biChatBox[1].messages.push({ recieverName: reciever, message: messageChat.message, time: messageChat.time })
+
         console.log(biChatBox[0], biChatBox[1])
+        ////if a user sends sends a message to another person it records the length when that usermessage stays at zero, 
+        ////the person receiving it, gets the number of message being pushed before it replies, if he or she then replies the number stays at 
+        //zero again
+        // let firstUser = biChatBox[0].message.filter((user, id) => user.recieverName === messageChat.senderInfo)
+        // let seconduser = biChatBox[1].message.filter((user, id) => user.reciever !== messageChat.recieverInfo)
+        biChatBox[0].messagesNumber = 0
+        biChatBox[1].messagesNumber = biChatBox[1].messagesNumber + 1
         ///It looks for the ids of the chatbox of the user and the person he or she is chatting with
+
+
         chatBox.map((user, id) => {
             if (user.uniqueId === messageChat.pairId) {
                 id1 = id
@@ -175,6 +189,13 @@ io.on('connection', (socket) => {
         socket.emit('chatListList', chatListBox)
     })
 
+    //Open the chatList
+    socket.on("createdChat", (name) => {
+        console.log(name)
+        let user = chatBox.filter((user, id) => user.uniqueId === name.uniqueId)
+        console.log(user)
+        socket.emit('userTracked', user[0])
+    })
 
     socket.on('disconnect', () => {
         //It removes the user that get disconnected from the chat from the useridentification array

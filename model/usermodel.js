@@ -9,7 +9,9 @@ const userSchema = mongoose.Schema({
     aboutMe: { type: String },
     ecIdentifier: { type: String },
     tokenValidation: { type: Boolean },
-    friendList: { type: Array }
+    friendList: { type: Array },
+    notificationNumber: { type: Array },
+    notification: { type: Array },
 })
 
 let saltRound = 5
