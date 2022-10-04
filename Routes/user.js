@@ -12,6 +12,7 @@ const { registerUser,
     Notification,
     AceptFriendRequest,
     getMyFriend,
+    uploadImage
 } = require('../Controller/usercontroller')
 route.post('/signup', registerUser)
 route.post('/login', authenticate)
@@ -25,6 +26,7 @@ route.post('/friendRequest', friendRequest)
 route.get('/notification', Notification)
 route.post('/friendRequestAccepted', AceptFriendRequest)
 route.get("/getMyFriend", getMyFriend)
+route.post('/uploadImg', uploadImage)
 
 
 

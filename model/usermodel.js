@@ -12,6 +12,7 @@ const userSchema = mongoose.Schema({
     friendList: { type: Array },
     notificationNumber: { type: Array },
     notification: { type: Array },
+    status: { type: String }
 })
 
 let saltRound = 5

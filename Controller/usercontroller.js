@@ -5,6 +5,12 @@ const jwt = require('jsonwebtoken')
 const { use } = require('express/lib/router')
 const { status } = require('express/lib/response')
 const cloudinary = require("cloudinary")
+require('dotenv').config()
+cloudinary.config({
+    cloud_name: process.env.CLOUDNAME,
+    api_key: process.env.APIKEY,
+    api_secret: process.env.APISECRET,
+});
 
 let userUserName = ''
 let userEmail = ''
@@ -178,15 +184,46 @@ const userInfo = (req, res) => {
 }
 
 ///All user
+let friendSuggested = []
 let ecIdentifier = "EC_Certified_User"
+let userToFInd = []
+let pending = []
+let accepted = []
 const allUser = (req, res) => {
     userModel.find({ ecIdentifier: ecIdentifier }, (err, result) => {
         if (err) {
             console.log(err)
             res.send({ status: false, message: 'no user found' })
         } else {
-            let user = result.filter((users, id) => users.Email !== userEmail)
-            res.send({ status: true, result: user })
+            userToFInd = result.filter((users, id) => users.Email !== userEmail)
+
+            userModel.findOne({ Email: userEmail }, (err, result) => {
+
+                if (err) {
+                    console.log(err)
+                } else {
+                    accepted = result.friendList.filter((user, id) => user.status === true)
+                    pending = result.friendList.filter((user, id) => user.status === false)
+                    accepted.map((status, id) => {
+                        userToFInd.map((user, id) => {
+                            if (user.userName === status.userName) {
+                                user.status = 'a'
+                            }
+                        })
+                    })
+
+                    pending.map((status, id) => {
+                        userToFInd.map((user, id) => {
+                            if (user.userName === status.userName) {
+                                user.status = 'b'
+                            }
+                        })
+                    })
+
+                    res.send({ status: true, result: userToFInd })
+                }
+            })
+
 
         }
     })
@@ -256,7 +293,7 @@ let user = {}
 let userFriendId = 0;
 const AceptFriendRequest = (req, res) => {
     console.log(req.body)
-    ///We looked for the user tha sent a friend request
+    ///We looked for the user the sent a friend request
     userModel.findOne({ userName: req.body.theAcceptedFriend.name }, (err, result) => {
         if (err) {
             console.log(err)
@@ -297,6 +334,16 @@ const AceptFriendRequest = (req, res) => {
                     console.log(err)
                 } else {
                     user = result
+                    let notifiactionAtUserId;
+                    user.notification.map((ui, ud) => {
+                        if (ui.name === thefriendRequesting.userName) {
+                            notifiactionAtUserId = ud
+                        }
+                    })
+                    let thatnotification = user.notification[notifiactionAtUserId]
+                    thatnotification.status = true
+                    user.notification[notifiactionAtUserId] = thatnotification
+
                     user.friendList.push(friendUwantToBeHisFriend)
                     userModel.findOneAndUpdate({ Email: userEmail }, user, (err) => {
                         if (err) {
@@ -325,6 +372,26 @@ const getMyFriend = (req, res) => {
         }
     })
 }
+const uploadImage = (req, res) => {
+    console.log(req.body)
+    cloudinary.v2.uploader.upload(req.body.imgUrl, { public_id: "user_img" }, (err, cresult) => {
+        if (err) {
+            console.log(err)
+        } else {
+            userModel.findOne({ Email: userEmail }, (err, result) => {
+                result.imgURL = cresult.url
+                userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        console.log("able to update")
+                    }
+                })
+            })
+
+        }
+    })
+}
 module.exports = {
     registerUser,
     authenticate,
@@ -336,5 +403,6 @@ module.exports = {
     friendRequest,
     Notification,
     AceptFriendRequest,
-    getMyFriend
+    getMyFriend,
+    uploadImage
 }
