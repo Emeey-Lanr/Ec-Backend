@@ -49,8 +49,8 @@ let user2 = ""
 io.on('connection', (socket) => {
 
     console.log(`a user has connected ${socket.id} `)
-    ///sends the user id back to the clinet side
-    // socket.emit('user-id', { userid: socket.id, status: true })
+    //sends the user id back to the clinet side
+    socket.emit('user-id', { userid: socket.id, status: true })
     // the server recieve the user username nad id back and gets it stored in an array
     socket.on('userDetails', (info) => {
         console.log(info)
@@ -132,10 +132,9 @@ io.on('connection', (socket) => {
         ////if a user sends sends a message to another person it records the length when that usermessage stays at zero, 
         ////the person receiving it, gets the number of message being pushed before it replies, if he or she then replies the number stays at 
         //zero again
-        // let firstUser = biChatBox[0].message.filter((user, id) => user.recieverName === messageChat.senderInfo)
-        // let seconduser = biChatBox[1].message.filter((user, id) => user.reciever !== messageChat.recieverInfo)
         biChatBox[0].messagesNumber = 0
         biChatBox[1].messagesNumber = biChatBox[1].messagesNumber + 1
+        console.log(biChatBox[0], biChatBox[1], "big chat boxjhgfdsa")
         ///It looks for the ids of the chatbox of the user and the person he or she is chatting with
 
 
@@ -173,8 +172,6 @@ io.on('connection', (socket) => {
         if (receivingUser.length > 0) {
             socket.to(receivingUser[0].userid).emit('messageSent', chatBox[id1])
             socket.emit('messageSentRecieved', chatBox[id2])
-            // socket.to(receivingUser[0].userid).to(sendingUser[0].userid).emit('messageSent', chatBox[id1])
-
         } else {
             socket.emit('messageSent', chatBox[id1])
         }
@@ -190,10 +187,34 @@ io.on('connection', (socket) => {
     })
 
     //Open the chatList
+    let chatNumber = 0
     socket.on("createdChat", (name) => {
         console.log(name)
+        chatBox.map((user, id) => {
+            if (user.uniqueId === name.removenumberID) {
+                chatNumber = id
+            }
+        })
+
+        let userToBeUpdated = chatBox.filter((user, id) => user.uniqueId === name.removenumberID)
+
         let user = chatBox.filter((user, id) => user.uniqueId === name.uniqueId)
-        console.log(user)
+        userToBeUpdated[0].messagesNumber = 0
+        chatBox[chatNumber] = userToBeUpdated[0]
+
+        let updateName = "Ec-Chat-collection"
+        const updateChat = () => {
+            ChatModel.findOneAndUpdate({ ecChatIdentification: updateName }, chatBox, (err) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log("able t update")
+                }
+            })
+        }
+        updateChat
+
+        console.log(user, chatNumber, "kjhgfdfghjkl;kjhgfdfghjkl;lkjhgfdfghjklkjh", userToBeUpdated)
         socket.emit('userTracked', user[0])
     })
 

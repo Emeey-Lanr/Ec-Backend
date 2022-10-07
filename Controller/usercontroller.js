@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const { use } = require('express/lib/router')
 const { status } = require('express/lib/response')
 const cloudinary = require("cloudinary")
+const { request } = require('express')
 require('dotenv').config()
 cloudinary.config({
     cloud_name: process.env.CLOUDNAME,
@@ -259,8 +260,10 @@ const friendRequest = (req, res) => {
                         userModel.findOneAndUpdate({ _id: req.body.moreinfo.userId }, lovedFriend, (err, result) => {
                             if (err) {
                                 console.log(err)
+                                res.send({ status: false })
                             } else {
                                 console.log(result, 'able to upadate')
+                                res.send({ status: true })
                             }
                         })
                     }
@@ -271,14 +274,14 @@ const friendRequest = (req, res) => {
     })
 }
 //Notification  
-
+let notificationNumber = 0;
 const Notification = (req, res) => {
     userModel.findOne({ Email: userEmail }, (err, result) => {
         if (err) {
             console.log(err)
         } else {
 
-            let notificationNumber = result.notificationNumber[0]
+            notificationNumber = result.notificationNumber[0]
             let notification = result.notification
             console.log(notification)
             res.send({ info: notification, notificationpoints: notificationNumber })
@@ -286,6 +289,24 @@ const Notification = (req, res) => {
     })
 }
 
+const readNotification = (req, res) => {
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log("unable to find user")
+        } else {
+            result.notificationNumber[0] = 0
+            userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+                if (err) {
+                    res.send({ status: false })
+                    console.log('unable to upadate')
+                } else {
+                    console.log('updated succesfully')
+                    res.send({ status: true })
+                }
+            })
+        }
+    })
+}
 
 //Accepting Friend Request 
 let thefriendRequesting;
@@ -348,8 +369,10 @@ const AceptFriendRequest = (req, res) => {
                     userModel.findOneAndUpdate({ Email: userEmail }, user, (err) => {
                         if (err) {
                             console.log(err)
+                            res.send({ status: false })
                         } else {
                             console.log('Friend added succesfully')
+                            res.send({ status: true })
                         }
 
                     })
@@ -359,16 +382,72 @@ const AceptFriendRequest = (req, res) => {
     })
 }
 
+////Delete Friend Request Notification
+const delFriendReqNotification = (req, res) => {
+    console.log(req.body.name)
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            let theRest = result.notification.filter((notifications, id) => notifications.name !== req.body.name)
+            result.notification = theRest
+            userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log("updated succesfully")
+                }
+            })
+
+
+        }
+    })
+}
 
 ////Friend get 
-let myFriend = []
+let check = false
+let myRealFriend = [{ userName: "check" }]
+let myFriend = [
+
+]
 const getMyFriend = (req, res) => {
+    myRealFriend = [{ userName: "check" }]
     userModel.findOne({ Email: userEmail }, (err, result) => {
         if (err) {
             console.log(err)
         } else {
             myFriend = result.friendList.filter((friend, id) => friend.status === true)
-            res.send({ myFriend: myFriend, status: true })
+            console.log(myFriend, "KJhgfdsdfghjklkjhgfdfg")
+            userModel.find({ ecIdentifier: ecIdentifier }, (err, result) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log(result)
+                    myFriend.map((users, myId) => {
+                        result.map((user, userId) => {
+                            if (user.userName == users.userName) {
+                                console.log(user, "yessss")
+                                myFriend.map((check, checkId) => {
+                                    if (check.userName === user.userName) {
+                                        check = true
+                                    }
+                                })
+                                if (check) {
+                                    console.log("user already exist")
+                                } else {
+                                    myRealFriend.push(user)
+                                }
+                            }
+
+                        })
+                    })
+                    myRealFriend = myRealFriend.filter((user, id) => id !== 0)
+                    console.log(myRealFriend, "i think i did it")
+                    res.send({ myFriend: myRealFriend, status: true })
+                }
+            })
+
+
         }
     })
 }
@@ -392,6 +471,54 @@ const uploadImage = (req, res) => {
         }
     })
 }
+
+///Update About me words
+
+const AboutMe = (req, res) => {
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            result.aboutMe = req.body.aboutMe
+            userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log("about me updated succesfully")
+                    res.send({ status: true })
+                }
+            })
+        }
+    })
+}
+
+
+///deleting Account
+const deleteAccount = (req, res) => {
+    console.log(req.body.password)
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            result.validateDelete(req.body.password, (err, same) => {
+                if (same) {
+                    userModel.findOneAndDelete({ Email: userEmail }, (err) => {
+                        if (err) {
+                            res.send({ status: false, message: "An error occured" })
+                        } else {
+                            res.send({ status: true, message: "Deleted Succesfully" })
+                        }
+                    })
+                } else {
+                    res.send({ status: false, message: "Invalid Password" })
+                }
+
+
+            })
+        }
+    })
+
+}
 module.exports = {
     registerUser,
     authenticate,
@@ -401,8 +528,12 @@ module.exports = {
     userInfo,
     allUser,
     friendRequest,
+    readNotification,
+    delFriendReqNotification,
     Notification,
     AceptFriendRequest,
     getMyFriend,
-    uploadImage
+    uploadImage,
+    AboutMe,
+    deleteAccount
 }

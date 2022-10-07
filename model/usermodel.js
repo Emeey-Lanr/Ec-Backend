@@ -39,6 +39,16 @@ userSchema.methods.validatePassword = function (password, callback) {
     })
 }
 
+userSchema.methods.validateDelete = function (password, callback) {
+   bcrypt.compare(password, this.password, (err, success)=>{
+       if(err){
+           console.log(err)
+       }else{
+           callback(err, success)
+       }
+   })
+}
+
 const userModel = mongoose.model('E-Chat_collection', userSchema)
 
 
