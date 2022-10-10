@@ -282,19 +282,24 @@ const friendRequest = (req, res) => {
 
 
 const readNotification = (req, res) => {
-    userModel.findOne({ Email: userEmail }, (err, result) => {
+    userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
         if (err) {
             res.send({ status: false })
         } else {
-            result.notificationNumber[0] = 0
-            userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
-                if (err) {
-                    res.send({ status: false })
+            if (result) {
+                result.notificationNumber[0] = 0
+                userModel.findOneAndUpdate({ Email: req.body.userDetails }, result, (err) => {
+                    if (err) {
+                        res.send({ status: false })
 
-                } else {
-                    res.send({ status: true })
-                }
-            })
+                    } else {
+                        res.send({ status: true })
+                        userEmail = req.body.userDetails
+                    }
+                })
+            } else {
+                res.send({ status: false })
+            }
         }
     })
 }
@@ -311,64 +316,64 @@ const AceptFriendRequest = (req, res) => {
             res.send({ status: false })
         } else {
             console.log(result)
-            if(result){
-            thefriendRequesting = result
-            //the user info is to be push into the person he has sent a friend request to friendlisty
-            friendUwantToBeHisFriend = {
-                Email: result.Email,
-                userName: result.userName,
-                imgURL: result.imgURL,
-                aboutMe: result.aboutMe,
-                status: true,
+            if (result) {
+                thefriendRequesting = result
+                //the user info is to be push into the person he has sent a friend request to friendlisty
+                friendUwantToBeHisFriend = {
+                    Email: result.Email,
+                    userName: result.userName,
+                    imgURL: result.imgURL,
+                    aboutMe: result.aboutMe,
+                    status: true,
+                }
+                ///Looking for the id for the person he has sent a friend request to to
+                //change the status to true, meaning it has been accepted
+                thefriendRequesting.friendList.map((user, id) => {
+                    if (user.userName === req.body.theAcceptedFriend.userRequestingTo) {
+                        userFriendId = id
+                    }
+                })
+                thefriendRequesting.friendList[userFriendId].status = true
+
+                ///It shows the he has a notification
+                thefriendRequesting.notificationNumber[0] = thefriendRequesting.notificationNumber[0] + 1
+                ///A notification is pushed that the friend request has been accepted
+                thefriendRequesting.notification.push(req.body.notificationSent)
+
+                userModel.findOneAndUpdate({ userName: req.body.theAcceptedFriend.name }, thefriendRequesting, (err) => {
+
+                })
+
+                userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
+                    if (err) {
+                        res.send({ status: false })
+                    } else {
+                        user = result
+                        let notifiactionAtUserId;
+                        user.notification.map((ui, ud) => {
+                            if (ui.name === thefriendRequesting.userName) {
+                                notifiactionAtUserId = ud
+                            }
+                        })
+                        let thatnotification = user.notification[notifiactionAtUserId]
+                        thatnotification.status = true
+                        user.notification[notifiactionAtUserId] = thatnotification
+
+                        user.friendList.push(friendUwantToBeHisFriend)
+                        userModel.findOneAndUpdate({ Email: req.body.userDetails }, user, (err) => {
+                            if (err) {
+                                res.send({ status: false })
+                            } else {
+                                res.send({ status: true })
+                                userEmail = req.body.userDetails
+                            }
+
+                        })
+                    }
+                })
+            } else {
+                res.send({ status: false, message: "user,no longer exist" })
             }
-            ///Looking for the id for the person he has sent a friend request to to
-            //change the status to true, meaning it has been accepted
-            thefriendRequesting.friendList.map((user, id) => {
-                if (user.userName === req.body.theAcceptedFriend.userRequestingTo) {
-                    userFriendId = id
-                }
-            })
-            thefriendRequesting.friendList[userFriendId].status = true
-
-            ///It shows the he has a notification
-            thefriendRequesting.notificationNumber[0] = thefriendRequesting.notificationNumber[0] + 1
-            ///A notification is pushed that the friend request has been accepted
-            thefriendRequesting.notification.push(req.body.notificationSent)
-
-            userModel.findOneAndUpdate({ userName: req.body.theAcceptedFriend.name }, thefriendRequesting, (err) => {
-
-            })
-
-            userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
-                if (err) {
-                    res.send({ status: false })
-                } else {
-                    user = result
-                    let notifiactionAtUserId;
-                    user.notification.map((ui, ud) => {
-                        if (ui.name === thefriendRequesting.userName) {
-                            notifiactionAtUserId = ud
-                        }
-                    })
-                    let thatnotification = user.notification[notifiactionAtUserId]
-                    thatnotification.status = true
-                    user.notification[notifiactionAtUserId] = thatnotification
-
-                    user.friendList.push(friendUwantToBeHisFriend)
-                    userModel.findOneAndUpdate({ Email: req.body.userDetails }, user, (err) => {
-                        if (err) {
-                            res.send({ status: false })
-                        } else {
-                            res.send({ status: true })
-                            userEmail = req.body.userDetails
-                        }
-
-                    })
-                }
-            })
-        }else{
-            res.send({status:false})
-        }
         }
     })
 }
