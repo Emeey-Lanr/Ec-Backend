@@ -306,6 +306,7 @@ let thefriendRequesting;
 let user = {}
 let userFriendId = 0;
 const AceptFriendRequest = (req, res) => {
+    user = {}
     ///We looked for the user the sent a friend request
     userModel.findOne({ userName: req.body.theAcceptedFriend.name }, (err, result) => {
         if (err) {
@@ -345,27 +346,31 @@ const AceptFriendRequest = (req, res) => {
                     if (err) {
                         res.send({ status: false })
                     } else {
-                        user = result
-                        let notifiactionAtUserId;
-                        user.notification.map((ui, ud) => {
-                            if (ui.name === thefriendRequesting.userName) {
-                                notifiactionAtUserId = ud
-                            }
-                        })
-                        let thatnotification = user.notification[notifiactionAtUserId]
-                        thatnotification.status = true
-                        user.notification[notifiactionAtUserId] = thatnotification
+                        if (result) {
+                            user = result
+                            let notifiactionAtUserId;
+                            user.notification.map((ui, ud) => {
+                                if (ui.name === thefriendRequesting.userName) {
+                                    notifiactionAtUserId = ud
+                                }
+                            })
+                            let thatnotification = user.notification[notifiactionAtUserId]
+                            thatnotification.status = true
+                            user.notification[notifiactionAtUserId] = thatnotification
 
-                        user.friendList.push(friendUwantToBeHisFriend)
-                        userModel.findOneAndUpdate({ Email: req.body.userDetails }, user, (err) => {
-                            if (err) {
-                                res.send({ status: false })
-                            } else {
-                                res.send({ status: true })
-                                userEmail = req.body.userDetails
-                            }
+                            user.friendList.push(friendUwantToBeHisFriend)
+                            userModel.findOneAndUpdate({ Email: req.body.userDetails }, user, (err) => {
+                                if (err) {
+                                    res.send({ status: false })
+                                } else {
+                                    res.send({ status: true })
+                                    userEmail = req.body.userDetails
+                                }
 
-                        })
+                            })
+                        } else {
+                            console.log('user not found')
+                        }
                     }
                 })
             } else {
