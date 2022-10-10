@@ -310,6 +310,8 @@ const AceptFriendRequest = (req, res) => {
 
             res.send({ status: false })
         } else {
+            console.log(result)
+            if(result){
             thefriendRequesting = result
             //the user info is to be push into the person he has sent a friend request to friendlisty
             friendUwantToBeHisFriend = {
@@ -364,6 +366,9 @@ const AceptFriendRequest = (req, res) => {
                     })
                 }
             })
+        }else{
+            res.send({status:false})
+        }
         }
     })
 }
