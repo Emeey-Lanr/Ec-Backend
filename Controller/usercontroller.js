@@ -224,17 +224,13 @@ const allUser = (req, res) => {
     })
 }
 //Notification  
-let notificationNumber = 0;
+
 const Notification = (req, res) => {
     userModel.findOne({ Email: userEmail }, (err, result) => {
         if (err) {
             res.send({ status: false })
         } else {
-
-            notificationNumber = result.notificationNumber[0]
-            let notification = result.notification
-            console.log(notification)
-            res.send({ info: notification, notificationpoints: notificationNumber })
+            res.send({ info: result.notification, notificationpoints: result.notificationNumber[0] })
         }
     })
 }
@@ -288,6 +284,7 @@ const readNotification = (req, res) => {
         } else {
             if (result) {
                 result.notificationNumber[0] = 0
+
                 userModel.findOneAndUpdate({ Email: req.body.userDetails }, result, (err) => {
                     if (err) {
                         res.send({ status: false })
