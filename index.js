@@ -213,9 +213,25 @@ io.on('connection', (socket) => {
             })
         }
         updateChat
-
-        console.log(user, chatNumber, "kjhgfdfghjkl;kjhgfdfghjkl;lkjhgfdfghjklkjh", userToBeUpdated)
         socket.emit('userTracked', user[0])
+    })
+
+    socket.on("imgUpload", (info) => {
+        chatBox.map((user, id) => {
+            if (user.talkingTo === info.userDetails) {
+                user.imgUrl = info.imgUrl
+            }
+        })
+        const updateImg = () => {
+            ChatModel.findOneAndUpdate({ ecChatIdentification: 'Ec-Chat-collection' }, { ecChatIdentification: 'Ec-Chat-collection', messagesBox: chatBox }, (err) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log('able to update')
+                }
+            })
+        }
+        updateImg()
     })
 
     socket.on('disconnect', () => {

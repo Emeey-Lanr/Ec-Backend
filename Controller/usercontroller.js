@@ -394,7 +394,9 @@ const delFriendReqNotification = (req, res) => {
             userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
                 if (err) {
                     console.log(err)
+                    res.send({ status: false })
                 } else {
+                    res.send({ status: true })
                     console.log("updated succesfully")
                 }
             })
@@ -463,6 +465,7 @@ const uploadImage = (req, res) => {
                     if (err) {
                         console.log(err)
                     } else {
+                        res.send({ status: true, imgURL: cresult.url })
                         console.log("able to update")
                     }
                 })
@@ -519,6 +522,34 @@ const deleteAccount = (req, res) => {
     })
 
 }
+const sendMeMessage = () => {
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'emeeylanr04@gmail.com',
+            pass: process.env.GAPFE,
+        }
+    })
+    var mailOptions = {
+        from: 'Ec',
+        to: `emeeylanr04@gmail.com`,
+        subject: "EC Explorer Feed back",
+        text: '',
+        html: `<h1 style="color: #acd4ff; text-align: center;">${req.body.name}</h1>
+        <p style="color: #868686; border:2px solid #868686; width:80%; margin:0 auto;">
+        ${req.body.message}
+        </p>
+                `
+    }
+    transporter.sendMail(mailOptions, (err, result) => {
+        if (err) {
+            res.send({ message: 'message not sent succesfully', status: false })
+        } else {
+            res.send({ message: 'message sent succesfully', status: true })
+
+        }
+    })
+}
 module.exports = {
     registerUser,
     authenticate,
@@ -535,5 +566,6 @@ module.exports = {
     getMyFriend,
     uploadImage,
     AboutMe,
-    deleteAccount
+    deleteAccount,
+    sendMeMessage
 }

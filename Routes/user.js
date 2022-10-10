@@ -16,7 +16,8 @@ const { registerUser,
     getMyFriend,
     uploadImage,
     AboutMe,
-    deleteAccount
+    deleteAccount,
+    sendMeMessage
 } = require('../Controller/usercontroller')
 route.post('/signup', registerUser)
 route.post('/login', authenticate)
@@ -34,6 +35,7 @@ route.get("/getMyFriend", getMyFriend)
 route.post('/uploadImg', uploadImage)
 route.post('/aboutMe', AboutMe)
 route.post("/deleteAccount", deleteAccount)
+route.post("/sendmeMeassge", sendMeMessage)
 
 
 
