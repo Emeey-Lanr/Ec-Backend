@@ -337,7 +337,7 @@ const AceptFriendRequest = (req, res) => {
 
             })
 
-            userModel.findOne({ Email: userEmail }, (err, result) => {
+            userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
                 if (err) {
                     res.send({ status: false })
                 } else {
@@ -353,11 +353,12 @@ const AceptFriendRequest = (req, res) => {
                     user.notification[notifiactionAtUserId] = thatnotification
 
                     user.friendList.push(friendUwantToBeHisFriend)
-                    userModel.findOneAndUpdate({ Email: userEmail }, user, (err) => {
+                    userModel.findOneAndUpdate({ Email: req.body.userDetails }, user, (err) => {
                         if (err) {
                             res.send({ status: false })
                         } else {
                             res.send({ status: true })
+                            userEmail = req.body.userDetails
                         }
 
                     })
