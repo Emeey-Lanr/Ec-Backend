@@ -334,11 +334,7 @@ const AceptFriendRequest = (req, res) => {
             thefriendRequesting.notification.push(req.body.notificationSent)
 
             userModel.findOneAndUpdate({ userName: req.body.theAcceptedFriend.name }, thefriendRequesting, (err) => {
-                if (err) {
-                    consoel.log("failed")
-                } else {
-                    console.log('success')
-                }
+
             })
 
             userModel.findOne({ Email: userEmail }, (err, result) => {
@@ -370,7 +366,7 @@ const AceptFriendRequest = (req, res) => {
         }
     })
 }
-
+let theRest = []
 ////Delete Friend Request Notification
 const delFriendReqNotification = (req, res) => {
     console.log(req.body.name)
@@ -378,11 +374,10 @@ const delFriendReqNotification = (req, res) => {
         if (err) {
             res.send({ status: false })
         } else {
-            let theRest = result.notification.filter((notifications, id) => notifications.name !== req.body.name)
+            theRest = result.notification.filter((notifications, id) => notifications.name !== req.body.name)
             result.notification = theRest
             userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
                 if (err) {
-
                     res.send({ status: false })
                 } else {
                     res.send({ status: true })
