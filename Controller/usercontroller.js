@@ -223,6 +223,21 @@ const allUser = (req, res) => {
         }
     })
 }
+//Notification  
+let notificationNumber = 0;
+const Notification = (req, res) => {
+    userModel.findOne({ Email: userEmail }, (err, result) => {
+        if (err) {
+            res.send({ status: false })
+        } else {
+
+            notificationNumber = result.notificationNumber[0]
+            let notification = result.notification
+            console.log(notification)
+            res.send({ info: notification, notificationpoints: notificationNumber })
+        }
+    })
+}
 
 //Friend Request 
 let lovedFriend = {}
@@ -240,19 +255,18 @@ const friendRequest = (req, res) => {
                 aboutMe: result.aboutMe,
                 status: false,
             }
-
-            console.log()
             userModel.findOne({ Email: userEmail }, (err, result) => {
                 let user = result
                 user.friendList.push(friendUwantToBeHisFriend)
                 userModel.findOneAndUpdate({ Email: userEmail }, user, (err, result) => {
                     if (err) {
-                        res.send({ status: false })
+                        console.log(err)
                     } else {
                         lovedFriend.notificationNumber[0] = lovedFriend.notificationNumber[0] + 1
                         lovedFriend.notification.push(req.body.notificationSent)
-                        userModel.findOneAndUpdate({ _id: req.body.moreinfo.userId }, lovedFriend, (err, result) => {
+                        userModel.findOneAndUpdate({ _id: req.body.moreinfo.userId }, lovedFriend, (err) => {
                             if (err) {
+                                console.log(err)
                                 res.send({ status: false })
                             } else {
                                 res.send({ status: true })
@@ -265,21 +279,7 @@ const friendRequest = (req, res) => {
 
     })
 }
-//Notification  
-let notificationNumber = 0;
-const Notification = (req, res) => {
-    userModel.findOne({ Email: userEmail }, (err, result) => {
-        if (err) {
-            res.send({ status: false })
-        } else {
 
-            notificationNumber = result.notificationNumber[0]
-            let notification = result.notification
-            console.log(notification)
-            res.send({ info: notification, notificationpoints: notificationNumber })
-        }
-    })
-}
 
 const readNotification = (req, res) => {
     userModel.findOne({ Email: userEmail }, (err, result) => {
@@ -307,6 +307,7 @@ const AceptFriendRequest = (req, res) => {
     ///We looked for the user the sent a friend request
     userModel.findOne({ userName: req.body.theAcceptedFriend.name }, (err, result) => {
         if (err) {
+
             res.send({ status: false })
         } else {
             thefriendRequesting = result
@@ -334,9 +335,9 @@ const AceptFriendRequest = (req, res) => {
 
             userModel.findOneAndUpdate({ userName: req.body.theAcceptedFriend.name }, thefriendRequesting, (err) => {
                 if (err) {
-                    res.send({ status: false })
+                    consoel.log("failed")
                 } else {
-                    res.send({ status: true })
+                    console.log('success')
                 }
             })
 
@@ -440,7 +441,6 @@ const getMyFriend = (req, res) => {
     })
 }
 const uploadImage = (req, res) => {
-    console.log(req.body)
     cloudinary.v2.uploader.upload(req.body.imgUrl, { public_id: "user_img" }, (err, cresult) => {
         if (err) {
             console.log(err)
