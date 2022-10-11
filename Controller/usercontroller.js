@@ -130,7 +130,7 @@ const otpVerication = (req, res) => {
     if (Number(req.body.one) === OTP.one && Number(req.body.two) === OTP.two && Number(req.body.three) === OTP.three && Number(req.body.four) === OTP.four) {
         userModel.findOne({ userName: userUserName }, (err, result) => {
             if (err) {
-                res.send({ status: false })
+                res.send({ status: false, message: "An error occured" })
             } else {
                 if (result) {
                     userVerifying = result
@@ -147,7 +147,7 @@ const otpVerication = (req, res) => {
             }
         })
     } else {
-        console.log('invalid otp')
+        res.send({ message: "Invalid Otp", status: false })
     }
 
 }
