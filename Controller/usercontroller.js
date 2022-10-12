@@ -85,7 +85,7 @@ const authenticate = (req, res) => {
                     }
                 })
             } else {
-                res.send({ message: "Invalid Crendtails", status: false })
+                res.send({ message: "Invalid Crendential", status: false })
             }
         }
     })
