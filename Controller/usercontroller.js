@@ -251,10 +251,10 @@ const friendRequest = (req, res) => {
                 aboutMe: result.aboutMe,
                 status: false,
             }
-            userModel.findOne({ Email: userEmail }, (err, result) => {
+            userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
                 let user = result
                 user.friendList.push(friendUwantToBeHisFriend)
-                userModel.findOneAndUpdate({ Email: userEmail }, user, (err, result) => {
+                userModel.findOneAndUpdate({ Email: req.body.userDetails }, user, (err, result) => {
                     if (err) {
                         console.log(err)
                     } else {
@@ -264,8 +264,10 @@ const friendRequest = (req, res) => {
                             if (err) {
                                 console.log(err)
                                 res.send({ status: false })
+                                userEmail = req.body.userDetails
                             } else {
                                 res.send({ status: true })
+                                userEmail = req.body.userDetails
                             }
                         })
                     }
@@ -288,7 +290,7 @@ const readNotification = (req, res) => {
                 userModel.findOneAndUpdate({ Email: req.body.userDetails }, result, (err) => {
                     if (err) {
                         res.send({ status: false })
-
+                        userEmail = req.body.userDetails
                     } else {
                         res.send({ status: true })
                         userEmail = req.body.userDetails
@@ -296,6 +298,7 @@ const readNotification = (req, res) => {
                 })
             } else {
                 res.send({ status: false })
+                userEmail = req.body.userDetails
             }
         }
     })
@@ -383,17 +386,20 @@ let theRest = []
 ////Delete Friend Request Notification
 const delFriendReqNotification = (req, res) => {
     console.log(req.body.name)
-    userModel.findOne({ Email: userEmail }, (err, result) => {
+    userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
         if (err) {
             res.send({ status: false })
         } else {
             theRest = result.notification.filter((notifications, id) => notifications.name !== req.body.name)
             result.notification = theRest
-            userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+            userModel.findOneAndUpdate({ Email: req.body.userDetails }, result, (err) => {
                 if (err) {
                     res.send({ status: false })
+                    userEmail = req.body.userDetails
                 } else {
                     res.send({ status: true })
+                    userEmail = req.body.userDetails
+
 
                 }
             })
@@ -453,14 +459,14 @@ const uploadImage = (req, res) => {
         if (err) {
             console.log(err)
         } else {
-            userModel.findOne({ Email: userEmail }, (err, result) => {
+            userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
                 result.imgURL = cresult.url
-                userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+                userModel.findOneAndUpdate({ Email: req.body.userDetails }, result, (err) => {
                     if (err) {
                         res.send({ status: false })
                     } else {
                         res.send({ status: true, imgURL: cresult.url })
-
+                        userEmail = req.body.userDetails
                     }
                 })
             })
@@ -472,17 +478,18 @@ const uploadImage = (req, res) => {
 ///Update About me words
 
 const AboutMe = (req, res) => {
-    userModel.findOne({ Email: userEmail }, (err, result) => {
+    userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
         if (err) {
             console.log(err)
         } else {
             result.aboutMe = req.body.aboutMe
-            userModel.findOneAndUpdate({ Email: userEmail }, result, (err) => {
+            userModel.findOneAndUpdate({ Email: req.body.userDetails }, result, (err) => {
                 if (err) {
                     console.log(err)
                 } else {
                     console.log("about me updated succesfully")
                     res.send({ status: true })
+                    userEmail = req.body.userDetails
                 }
             })
         }
@@ -493,13 +500,13 @@ const AboutMe = (req, res) => {
 ///deleting Account
 const deleteAccount = (req, res) => {
     console.log(req.body.password)
-    userModel.findOne({ Email: userEmail }, (err, result) => {
+    userModel.findOne({ Email: req.body.userDetails }, (err, result) => {
         if (err) {
             console.log(err)
         } else {
             result.validateDelete(req.body.password, (err, same) => {
                 if (same) {
-                    userModel.findOneAndDelete({ Email: userEmail }, (err) => {
+                    userModel.findOneAndDelete({ Email: req.body.userDetails }, (err) => {
                         if (err) {
                             res.send({ status: false, message: "An error occured" })
                         } else {
